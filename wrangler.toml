@@ -1,0 +1,35 @@
+name = "workers_kv_rust"
+type = "javascript"
+workers_dev = true
+compatibility_date = "2022-01-20"
+
+[vars]
+WORKERS_RS_VERSION = "0.0.9"
+
+[build]
+command = "cargo install -q worker-build && worker-build --release" # required
+
+[build.upload]
+dir = "build/worker"
+format = "modules"
+main = "./shim.mjs"
+
+[[build.upload.rules]]
+globs = ["**/*.wasm"]
+type = "CompiledWasm"
+
+# read more about configuring your Worker via wrangler.toml at:
+# https://developers.cloudflare.com/workers/cli-wrangler/configuration
+
+
+# Create KV namespace and preview
+#  wrangler kv:namespace create "KV_FROM_RUST"
+#  wrangler kv:namespace create "KV_FROM_RUST" --preview
+kv_namespaces = [
+    #{ binding = "KV_FROM_RUST", id = "e24c06def49549edbc7af1a017cf6cf4", preview_id = "7aa6b1cced524948a55c12190e6f5408" }
+    { binding = "KV_FROM_RUST", id = "0d1de32ee7db4273b01a0835a9aa6c09", preview_id = "7aa6b1cced524948a55c12190e6f5408" }
+]
+
+# Create preview ID
+#{ binding = "KV_FROM_RUST", id = "e24c06def49549edbc7af1a017cf6cf4" }
+#{ binding = "KV_FROM_RUST", preview_id = "7aa6b1cced524948a55c12190e6f5408" }

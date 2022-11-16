@@ -1,45 +1,27 @@
+use worker::*;
 
+#[event(fetch)]
+pub async fn main(mut req: Request, env: Env, _ctx: worker::Context) -> Result<Response> {
+    console_log!(
+        "{} {}, located at: {:?}, within: {}",
+        req.method().to_string(),
+        req.path(),
+        req.cf().coordinates().unwrap_or_default(),
+        req.cf().region().unwrap_or("unknown region".into())
+    );
 
-/*
-fn main() {
-    // Optionally, get more helpful error messages written to the console in the case of a panic.
-    utils::set_panic_hook();
+    if !matches!(req.method(), Method::Post) {
+        return Response::error("Method Not Allowed", 405);
+    }
 
-    // Optionally, use the Router to handle matching endpoints, use ":name" placeholders, or "*name"
-    // catch-alls to match on specific patterns. Alternatively, use `Router::with_data(D)` to
-    // provide arbitrary data that will be accessible in each route via the `ctx.data()` method.
-    let router = Router::new();
-
-    // Add as many routes as your Worker needs! Each route will get a `Request` for handling HTTP
-    // functionality and a `RouteContext` which you can use to  and get route parameters and
-    // Environment bindings like KV Stores, Durable Objects, Secrets, and Variables.
-    router
-        .get("/", |_, _| Response::ok("Hello from Workers!"))
-        .post_async("/form/:field", |mut req, ctx| async move {
-            if let Some(name) = ctx.param("field") {
-                let form = req.form_data().await?;
-                match form.get(name) {
-                    Some(FormEntry::Field(value)) => {
-                        return Response::from_json(&json!({ name: value }))
-                    }
-                    Some(FormEntry::File(_)) => {
-                        return Response::error("`field` param in form shouldn't be a File", 422);
-                    }
-                    None => return Response::error("Bad Request", 400),
-                }
+    if let Some(file) = req.form_data().await?.get("file") {
+        return match file {
+            FormEntry::File(buf) => {
+                Response::ok(&format!("size = {}", buf.bytes().await?.len()))
             }
+            _ => Response::error("`file` part of POST form must be a file", 400),
+        };
+    }
 
-            Response::error("Bad Request", 400)
-        })
-        .get("/worker-version", |_, ctx| {
-            let version = ctx.var("WORKERS_RS_VERSION")?.to_string();
-            Response::ok(version)
-        })
-        .run(req, env)
-        .await
-}
-*/
-
-fn main() {
-    println!("Hello, world!");
+    Response::error("Bad Request", 400)
 }
